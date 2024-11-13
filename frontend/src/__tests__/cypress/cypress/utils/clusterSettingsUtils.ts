@@ -31,6 +31,11 @@ export const validateModelServingPlatforms = (dashboardConfig: DashboardConfig):
  */
 export const validatePVCSize = (dashboardConfig: DashboardConfig): void => {
   const { pvcSize } = dashboardConfig.notebookController;
+  // Log the entire dashboardConfig object
+cy.log('dashboardConfig:', JSON.stringify(dashboardConfig));
+
+// Log the notebookController object
+cy.log('notebookController:', JSON.stringify(dashboardConfig.notebookController));
   cy.log(`Value of PVC Size: ${String(pvcSize)}`);
 
   if (pvcSize) {
