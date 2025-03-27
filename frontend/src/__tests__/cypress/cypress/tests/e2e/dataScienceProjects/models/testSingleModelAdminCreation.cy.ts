@@ -54,13 +54,13 @@ describe('[Product Bug: RHOAIENG-20213] Verify Admin Single Model Creation and V
       },
     );
   });
-  after(() => {
-    //Check if the Before Method was executed to perform the setup
-    if (!wasSetupPerformed()) return;
+  // after(() => {
+  //   //Check if the Before Method was executed to perform the setup
+  //   if (!wasSetupPerformed()) return;
 
-    // Delete provisioned Project - 5 min timeout to accomadate increased time to delete a project with a model
-    deleteOpenShiftProject(projectName, { timeout: 300000 });
-  });
+  //   // Delete provisioned Project - 5 min timeout to accomadate increased time to delete a project with a model
+  //   deleteOpenShiftProject(projectName, { timeout: 300000 });
+  // });
 
   it(
     'Verify that an Admin can Serve, Query a Single Model using both the UI and External links',
