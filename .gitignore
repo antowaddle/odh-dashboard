@@ -32,3 +32,8 @@ dist/
 
 # Local copies of shared files
 frontend/packages/model-registry/pact/scripts/helpers/
+
+# Test results
+**/pact-test-results/
+**/test-results/
+junit.xml
