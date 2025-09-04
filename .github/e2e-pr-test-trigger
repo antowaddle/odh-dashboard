@@ -157,16 +157,48 @@ jobs:
           # Download test-variables.yml from GitLab securely
           # For forked PRs, this will fail due to missing secrets - use local test-vars.yml
           if [ -n "${{ secrets.GITLAB_TOKEN }}" ] && [ -n "${{ secrets.GITLAB_TEST_VARS_URL }}" ]; then
-            curl -H "Authorization: Bearer ${{ secrets.GITLAB_TOKEN }}" \
-                 "${{ secrets.GITLAB_TEST_VARS_URL }}" \
-                 -o ${{ github.workspace }}/frontend/src/__tests__/cypress/test-variables.yml
-          else
-            echo "⚠️  GitLab secrets not available (forked PR) - using local test-variables.yml"
-            # Ensure local test-variables.yml exists
-            if [ ! -f "${{ github.workspace }}/frontend/src/__tests__/cypress/test-variables.yml" ]; then
-              echo "❌ Local test-variables.yml not found"
+            echo "🔄 Both secrets are available, attempting download..."
+            echo "Token length: ${#GITLAB_TOKEN}"
+            echo "URL length: ${#GITLAB_TEST_VARS_URL}"
+
+            # Debug: Show first few characters of secrets (safely)
+            if [ -n "${{ secrets.GITLAB_TOKEN }}" ]; then
+              echo "Token starts with: ${{ secrets.GITLAB_TOKEN }}" | cut -c1-10
+            fi
+            if [ -n "${{ secrets.GITLAB_TEST_VARS_URL }}" ]; then
+              echo "URL starts with: ${{ secrets.GITLAB_TEST_VARS_URL }}" | cut -c1-20
+            fi
+
+            # Try with SSL verification disabled (for self-signed certs)
+            if curl -f -k -H "Authorization: Bearer ${{ secrets.GITLAB_TOKEN }}" \
+                     "${{ secrets.GITLAB_TEST_VARS_URL }}" \
+                     -o ${{ github.workspace }}/frontend/src/__tests__/cypress/test-variables.yml; then
+              echo "✅ Successfully downloaded test configuration from GitLab"
+              ls -la ${{ github.workspace }}/frontend/src/__tests__/cypress/test-variables.yml
+            else
+              echo "❌ Failed to download from GitLab"
+              echo "Curl exit code: $?"
+
+              # Try to get more details about the failure
+              echo "Trying without -f to see error details..."
+              curl -k -H "Authorization: Bearer ${{ secrets.GITLAB_TOKEN }}" \
+                   "${{ secrets.GITLAB_TEST_VARS_URL }}" \
+                   -o /tmp/test-response 2>&1 || echo "Curl failed with: $?"
+
+              if [ -f /tmp/test-response ]; then
+                head -5 /tmp/test-response
+              fi
+
               exit 1
             fi
+          else
+            echo "⚠️  GitLab secrets not available - cannot download test configuration"
+            echo "💡 This workflow requires GITLAB_TOKEN and GITLAB_TEST_VARS_URL secrets to be configured"
+            echo ""
+            echo "🔍 DEBUG: Secret status:"
+            echo "GITLAB_TOKEN exists: $([ -n '${{ secrets.GITLAB_TOKEN }}' ] && echo 'YES' || echo 'NO')"
+            echo "GITLAB_TEST_VARS_URL exists: $([ -n '${{ secrets.GITLAB_TEST_VARS_URL }}' ] && echo 'YES' || echo 'NO')"
+            exit 1
           fi
 
       - name: Login to OpenShift cluster
